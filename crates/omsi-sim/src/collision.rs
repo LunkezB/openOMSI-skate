@@ -311,6 +311,11 @@ pub struct MeshShape {
 }
 
 impl MeshShape {
+    /// Collision faces in object coordinates, for simulation adapters.
+    pub fn triangles(&self) -> impl Iterator<Item = [DVec3; 3]> + '_ {
+        self.tris.iter().map(|t| t.map(|p| p.as_dvec3()))
+    }
+
     /// From triangles in the object's frame. Triangles whose top stays below `min_top` over
     /// the origin (a kerb, a floor at ground level) are no obstacle.
     pub fn from_triangles(tris: impl Iterator<Item = [DVec3; 3]>, min_top: f64) -> MeshShape {

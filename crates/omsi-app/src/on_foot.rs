@@ -68,6 +68,10 @@ pub(crate) enum FootCam {
 }
 
 pub(crate) struct OnFoot {
+    #[cfg(feature = "skate3")]
+    pub skate: Option<crate::skate::Skating>,
+    #[cfg(feature = "skate3")]
+    pub skate_requested: bool,
     /// The feet on the ground.
     pub pos: DVec3,
     pub heading: f64,
@@ -440,6 +444,10 @@ impl App {
             (None, None) => (pos, look_yaw, None, None),
         };
         self.session.on_foot = Some(OnFoot {
+            #[cfg(feature = "skate3")]
+            skate: None,
+            #[cfg(feature = "skate3")]
+            skate_requested: false,
             pos,
             heading: face,
             vel: DVec2::ZERO,
@@ -474,7 +482,7 @@ impl App {
 
     /// Ctrl+Shift+G inside a bus: out by its nearest door, open or shut (getting up now
     /// stands the driver up inside, and a shut door kept them in).
-    fn step_out(&mut self) {
+    pub(crate) fn step_out(&mut self) {
         let Some(f) = self.session.on_foot.as_ref() else { return };
         let Some((bus, _)) = f.inside else { return };
         let (pos, yaw) = (f.pos, f.yaw as f64);
@@ -576,6 +584,10 @@ impl App {
         }
         let kind = Self::figure_kind(self.world.as_deref(), self.session.humans.as_mut(), &self.args.root, None);
         self.session.on_foot = Some(OnFoot {
+            #[cfg(feature = "skate3")]
+            skate: None,
+            #[cfg(feature = "skate3")]
+            skate_requested: false,
             pos,
             heading,
             vel: DVec2::ZERO,
@@ -791,6 +803,16 @@ impl App {
 
     /// The keys on foot (and Ctrl+Shift+G at the wheel); true when the key was taken.
     pub(crate) fn foot_key(&mut self, code: KeyCode, pressed: bool, repeat: bool, ctrl: bool, shift: bool) -> bool {
+        #[cfg(feature = "skate3")]
+        {
+            if code == KeyCode::KeyJ && !ctrl && !shift {
+                if pressed && !repeat { self.toggle_skate(); }
+                return true;
+            }
+            if self.session.on_foot.as_ref().is_some_and(|f| f.skate.is_some()) {
+                return !matches!(code, KeyCode::Escape | KeyCode::F12 | KeyCode::KeyP | KeyCode::KeyV | KeyCode::Slash);
+            }
+        }
         if self.session.on_foot.is_none() {
             // (not where the player bound Ctrl+Shift+G to something, #2478)
             if pressed && !repeat && code == KeyCode::KeyG && ctrl && shift && self.player.is_some() && !self.chord_bound(code, shift, ctrl, false) {
@@ -968,7 +990,7 @@ impl WheelCx<'_, '_> {
 
 /// The boxes of the vehicles within `r` of `at`: the own bus, the traffic, the other
 /// players' buses.
-fn vehicle_boxes(at: DVec2, r: f64, player: Option<&crate::player::Player>, placed: &[crate::player::Player], traffic: Option<&crate::traffic::Traffic>, net: &crate::app::NetState) -> Vec<Obb> {
+pub(crate) fn vehicle_boxes(at: DVec2, r: f64, player: Option<&crate::player::Player>, placed: &[crate::player::Player], traffic: Option<&crate::traffic::Traffic>, net: &crate::app::NetState) -> Vec<Obb> {
     let mut boxes = Vec::new();
     let mut add = |v: &omsi_sim::VehicleInstance| {
         if (v.position.truncate() - at).length() > r {
@@ -1082,6 +1104,11 @@ pub(crate) fn tick(cx: &mut OnFootCx, dt: f32) {
         _ => {}
     }
     let Some(mut f) = cx.people.on_foot.take() else { return };
+    #[cfg(feature = "skate3")]
+    if crate::skate::tick(&mut f, cx, dt) {
+        *cx.people.on_foot = Some(f);
+        return;
+    }
     let dt64 = dt as f64;
     f.ease_crouch(dt);
     let shift = cx.input.keys.contains(&KeyCode::ShiftLeft) || cx.input.keys.contains(&KeyCode::ShiftRight);

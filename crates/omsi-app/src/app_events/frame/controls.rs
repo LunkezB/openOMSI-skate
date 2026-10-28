@@ -114,6 +114,8 @@ impl App {
     /// The head turned by a stick, a gamepad's steering, and OMSI's mouse steering: the
     /// controllers' axes as the bus is to take them.
     pub(super) fn frame_mouse_drive(&mut self, dt: f32, analog: crate::controllers::Analog) -> crate::controllers::Analog {
+        #[cfg(feature = "skate3")]
+        if self.skate_controls() { return Default::default(); }
         // OMSI's mouse control: the cursor's place across steers, above the middle
         // of the window is the throttle, below it the brake.
         // Steering as Omsi.exe has it (0x6f4284..0x6f447b): the whole width of the
@@ -265,6 +267,16 @@ impl App {
 
     /// The controllers' buttons: the game's own actions, then the bus's, with the axes.
     pub(super) fn frame_pad_actions(&mut self, analog: crate::controllers::Analog, actions: Vec<(String, bool)>) {
+        #[cfg(feature = "skate3")]
+        if self.skate_controls() {
+            self.input.pad_repeat.clear();
+            self.input.pad_look = [false; 4];
+            if let Some(p) = self.player.as_mut() {
+                p.axes.release_all();
+                p.analog = Default::default();
+            }
+            return;
+        }
         // the controller's view buttons are the game's, not the bus's: looking around
         // while held (`view_look_*`), the bus radio while held (`voice_radio`), and
         // OMSI's view actions (other cameras, views)

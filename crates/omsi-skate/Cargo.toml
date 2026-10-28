@@ -1,0 +1,13 @@
+[package]
+name = "omsi-skate"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "In-process Skate 3 simulation and streamed OMSI collision bridge"
+
+[dependencies]
+glam.workspace = true
+omsi-map = { path = "../omsi-map" }
+omsi-geometry = { path = "../omsi-geometry" }
+omsi-sim = { path = "../omsi-sim" }
+skate-host = { path = "../../vendor/skate/crates/skate-host" }

@@ -7,6 +7,8 @@ impl App {
     /// The camera of the bus's views (the field of view only for the free camera and on
     /// foot).
     pub(super) fn frame_view_camera(&mut self, dt: f32) {
+        #[cfg(feature = "skate3")]
+        if self.session.on_foot.as_ref().is_some_and(|f| f.skate.is_some()) { return; }
         if self.view != "free" && self.view != "foot" {
             let Some(p) = self.player.as_mut() else { return };
             // (the key made only when the view changed: `swap_view_look` does nothing else)

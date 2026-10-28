@@ -131,6 +131,8 @@ mod memory;
 mod offscreen;
 pub(crate) use omsi_sim::ground_gap;
 mod on_foot;
+#[cfg(feature = "skate3")]
+mod skate;
 mod trolley_hands;
 mod trolley_mouse;
 pub(crate) mod trolley_net;

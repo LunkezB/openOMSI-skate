@@ -287,6 +287,7 @@ flags! {
     OMSI_FLEET_IDLE: Num, Test, Use, "FLEET_IDLE", "Seconds a fleet vehicle idles (shortened for tests).";
     OMSI_FOLLOW_CAM: Text, Test, Use, "-", "right,ahead,up,yaw,pitch: a camera in the followed car's frame.";
     OMSI_FOOT_RUN: Num, Tuning, Use, "3.8", "On foot: the pace of a run (Shift) in m/s.";
+    OMSI_SKATE_ASSETS: Text, Setup, Use, "-", "Prepared Skate 3 assets directory for the skate3 build feature.";
     OMSI_FOOT_WALK: Num, Tuning, Use, "1.4", "On foot: the walking pace in m/s.";
     OMSI_FORCE_LOD: Bool, Debug, Use, "off", "Draw the lower levels of detail of the AI vehicles at any size (to look at them).";
     OMSI_FORCE_OPAQUE: Bool, Switch, Use, "off", "Draw transmap-masked materials opaque.";

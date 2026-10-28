@@ -4,6 +4,10 @@ use super::*;
 
 fn walker() -> OnFoot {
     OnFoot {
+        #[cfg(feature = "skate3")]
+        skate: None,
+        #[cfg(feature = "skate3")]
+        skate_requested: false,
         pos: DVec3::ZERO,
         heading: 0.0,
         vel: DVec2::ZERO,

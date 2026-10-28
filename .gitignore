@@ -1,6 +1,10 @@
 # build output (releases are built by GitHub Actions, see .github/workflows)
 /target
 /dist
+/skate-data/
+/skate-assets/
+/.venv-skate/
+__pycache__/
 **/*.rs.bk
 
 # local tools and editors

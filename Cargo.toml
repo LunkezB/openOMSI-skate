@@ -46,9 +46,10 @@ members = [
     "crates/omsi-mt",
     "crates/omsi-app",
     "crates/omsi-srcscan",
+    "crates/omsi-skate",
     "tools/omsi-check",
 ]
-exclude = ["launcher/src-tauri"]
+exclude = ["launcher/src-tauri", "vendor/skate", "vendor/skate/crates/skate-host"]
 
 [workspace.package]
 version = "0.1.0"
