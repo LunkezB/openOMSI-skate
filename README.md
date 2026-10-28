@@ -1,7 +1,8 @@
 > **Experimental Skate 3 fork.** Build with `--features skate3` to switch from
 > a stopped bus to skating with J in the same game. J dismounts; G by the driver's
 > position returns to the bus. Requires your own OMSI 2 and converted Skate 3 data.
-> [Setup, scope and current limits](docs/SKATE3.md). Gameplay is not yet verified.
+> [Setup, scope and current limits](docs/SKATE3.md). Locally tested on Windows/Grundorf;
+> keyboard fallback and XInput are supported. See the validation report for the tested scope.
 > Upstream download badges below refer to the original openOMSI, without this integration.
 
 <p align="center">

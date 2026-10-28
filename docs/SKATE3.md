@@ -4,9 +4,11 @@ This fork connects openOMSI's loaded world to the real Skate 3 Rust rewrite
 simulation. The bus, map, traffic and skateboard share one openOMSI process
 and window. It does not launch a second game or export maps to another game.
 
-**Status: source implementation; gameplay has not been verified with original
-game data.** Compilation and the synthetic collision tests are recorded in
-`docs/SKATE3-VALIDATION.md`. This is not a finished release.
+**Status: experimental Windows build, tested locally with original game data
+on Grundorf.** The bus-to-skate transition, keyboard pushing and returning to
+the bus were exercised in the game. The owned-asset simulation probe also
+exercised a Flick-It jump. Exact checks and limits are recorded in
+`docs/SKATE3-VALIDATION.md`.
 
 ## Build and run on Windows x64
 
@@ -48,10 +50,23 @@ system steps outside, then the Skate session loads. If the door cannot be
 reached, leave the bus with Ctrl+Shift+G first and press J outdoors.
 You can also start with `--on-foot` and press J after terrain loads.
 
-Skating uses an **Xbox/XInput controller** and the rewrite's original controls:
+An **Xbox/XInput controller** uses the rewrite's original controls:
 A pushes, the left stick steers and the right stick performs Flick-It tricks.
+With no XInput device connected, the keyboard supplies the same raw inputs:
+
+| Key | Action |
+| --- | --- |
+| W / Space | Push |
+| A / D | Steer |
+| S | Brake |
+| Shift | Push with the other foot |
+| Arrow keys | Right-stick Flick-It input; down then quickly up performs an ollie |
+| Q / E | Left / right grab trigger |
+| F | Native board toggle (upstream off-board limitations still apply) |
+
 J dismounts to walking. Walk to your driver's position and press G to return to
-the bus. Pause and the Escape menu keep working. Skate inputs are withheld from
+the bus. Escape → Back to my bus also returns to the cab. Pause and the Escape
+menu keep working. Skate inputs are withheld from
 openOMSI's bus controls while the skating session or exit request is active.
 `OMSI_NO_UPDATE` keeps upstream release updates from replacing the fork.
 
@@ -73,8 +88,8 @@ openOMSI's bus controls while the skating session or exit request is active.
 
 ## Current limits
 
-* Windows x64/XInput is the supported target of this first integration. Keyboard
-  trick controls, other controllers and mobile controls are not connected.
+* Windows x64, XInput and keyboard fallback are supported. Other controllers
+  and mobile controls have not been connected or tested.
 * Vehicle collision is refreshed as static geometry at intervals: moving-platform
   velocity transfer and two-way collision impulses are not implemented.
 * Collision comes from OMSI simulation surfaces and collision meshes, which may
@@ -85,8 +100,21 @@ openOMSI's bus controls while the skating session or exit request is active.
   Skate multiplayer is not implemented; use local single-player for playtests.
 * The source uses the compatible mashup extraction at the revisions listed in
   `vendor/skate/NOTICE.md`; it does not claim parity with the latest SK8-ENGINE.
-* Initial model decoding, collision gathering and CPU skinning may cause stalls.
-  The asset-dependent paths need a real playtest before treating this as playable.
+* Initial model decoding, shader compilation, collision gathering and CPU
+  skinning may cause stalls. The first renderer startup took about 40–50 seconds
+  on the tested integrated GPU; a loading window is normal during that time.
+* Only Grundorf was played locally. Grinds on arbitrary scenery, long streaming
+  sessions, the physical controller path and more demanding maps remain unverified.
+
+## Owned-asset diagnostics
+
+```powershell
+cargo run --locked -p omsi-skate --example check_session -- "path/to/assets"
+```
+
+This loads the real graphs, animation banks and physics, pushes on a flat
+collision world for 360 ticks, then performs a Flick-It jump. It fails if the
+worker errors, pushing does not move the skater, or the jump does not lift it.
 
 ## Related work checked on 2026-10-28
 

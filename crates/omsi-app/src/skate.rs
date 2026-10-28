@@ -7,6 +7,7 @@ use crate::{
 use glam::{DVec2, DVec3, Mat4, Vec3};
 use omsi_skate::{ControllerTransport, Frame, Pose, Runtime};
 use std::sync::Arc;
+use winit::keyboard::KeyCode;
 
 pub(crate) struct Skating {
     runtime: Runtime,
@@ -19,9 +20,21 @@ pub(crate) struct Skating {
     collision_at: DVec3,
     refresh: f32,
     pending_dt: f32,
+    keyboard_packet: u32,
 }
 
 impl App {
+    pub(crate) fn clear_skate(&mut self) {
+        if let Some(f) = self.session.on_foot.as_mut() {
+            f.skate_requested = false;
+            if let Some(skate) = f.skate.take() {
+                if let (Some(r), Some(scene)) = (self.renderer.as_ref(), self.scene.as_mut()) {
+                    skate.visual.free(r, scene);
+                }
+            }
+        }
+    }
+
     pub(crate) fn skate_controls(&self) -> bool {
         self.session
             .on_foot
@@ -103,7 +116,7 @@ pub(crate) fn tick(f: &mut OnFoot, cx: &mut OnFootCx, dt: f32) -> bool {
                 f.vz = 0.0;
                 f.skate = Some(skate);
                 *cx.view.view = "foot".into();
-                *cx.ui.service_msg = Some(("Skate session loading. J dismounts. Xbox controller: A push, sticks steer/tricks.".into(), 7.0));
+                *cx.ui.service_msg = Some(("Skate loading. J dismounts. W/Space push, A/D steer, S brake, arrows Flick-It. Controller supported.".into(), 8.0));
             }
             Err(e) => *cx.ui.service_msg = Some((e, 8.0)),
         }
@@ -166,6 +179,7 @@ fn start(f: &OnFoot, cx: &mut OnFootCx) -> Result<Skating, String> {
         collision_at: f.pos,
         refresh: 0.0,
         pending_dt: 0.0,
+        keyboard_packet: 0,
     })
 }
 
@@ -241,8 +255,14 @@ fn advance(s: &mut Skating, f: &mut OnFoot, cx: &mut OnFootCx, dt: f32) -> Resul
             s.refresh = 0.0;
         }
     } else if s.pose.is_some() {
-        let input = if cx.input.window_focused {
-            s.pad.poll()
+        let input = if cx.input.window_focused || omsi_cfg::flags::OMSI_BACKGROUND.is_set() {
+            let pad = s.pad.poll();
+            if pad.controller().is_some() {
+                pad
+            } else {
+                s.keyboard_packet = s.keyboard_packet.wrapping_add(1);
+                keyboard(&cx.input.keys, s.keyboard_packet)
+            }
         } else {
             omsi_skate::InputFrame::neutral()
         };
@@ -251,4 +271,38 @@ fn advance(s: &mut Skating, f: &mut OnFoot, cx: &mut OnFootCx, dt: f32) -> Resul
         }
     }
     Ok(())
+}
+
+fn keyboard(keys: &hashbrown::HashSet<KeyCode>, packet: u32) -> omsi_skate::InputFrame {
+    let held = |key| keys.contains(&key);
+    let mut buttons = 0;
+    for (down, bit) in [
+        (held(KeyCode::KeyW) || held(KeyCode::Space), 0x1000),
+        (held(KeyCode::KeyS), 0x2000),
+        (
+            held(KeyCode::ShiftLeft) || held(KeyCode::ShiftRight),
+            0x4000,
+        ),
+        (held(KeyCode::KeyF), 0x8000),
+    ] {
+        if down {
+            buttons |= bit;
+        }
+    }
+    let axis = |positive, negative| {
+        ((i32::from(held(positive)) - i32::from(held(negative))) * i32::from(i16::MAX)) as i16
+    };
+    omsi_skate::InputFrame::from_pad(
+        buttons,
+        [
+            if held(KeyCode::KeyQ) { 255 } else { 0 },
+            if held(KeyCode::KeyE) { 255 } else { 0 },
+        ],
+        [axis(KeyCode::KeyD, KeyCode::KeyA), 0],
+        [
+            axis(KeyCode::ArrowRight, KeyCode::ArrowLeft),
+            axis(KeyCode::ArrowUp, KeyCode::ArrowDown),
+        ],
+        packet,
+    )
 }

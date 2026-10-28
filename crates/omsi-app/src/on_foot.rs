@@ -523,6 +523,8 @@ impl App {
     /// and the player stands beside where its driver's door was, on foot; another bus is
     /// taken by walking up to its driver's door (G), or placed from the menu.
     pub(crate) fn remove_driven_vehicle(&mut self) {
+        #[cfg(feature = "skate3")]
+        self.clear_skate();
         if self.player.is_none() {
             self.service_msg = Some(("There is no vehicle to remove: you are on foot".into(), 3.0));
             return;
@@ -577,6 +579,8 @@ impl App {
     /// On foot at `pos` without a bus of one's own (the vehicle removed, or the session
     /// started as a pedestrian).
     pub(crate) fn start_on_foot(&mut self, pos: DVec3, heading: f64) {
+        #[cfg(feature = "skate3")]
+        self.clear_skate();
         if self.session.humans.is_none() {
             let mut h = crate::humans::Humans::new(&self.args.root, &mut self.gfx.sim_view.people);
             h.avatar_only = true;
@@ -636,11 +640,15 @@ impl App {
 
     /// Take the wheel of placed vehicle `k` (the one driven now, if any, stays placed).
     pub(crate) fn take_placed(&mut self, k: usize) {
+        #[cfg(feature = "skate3")]
+        self.clear_skate();
         SeatCx::of(&mut self.parts()).take_placed(k);
     }
 
     /// Esc → Back to my bus: wherever the walker has got to, back at the wheel.
     pub(crate) fn back_to_bus(&mut self) {
+        #[cfg(feature = "skate3")]
+        self.clear_skate();
         if self.session.on_foot.is_some() && self.player.is_some() {
             self.sit_at_the_wheel();
             self.service_msg = Some(("Back at the wheel".into(), 3.0));
